@@ -12,7 +12,6 @@
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
             border-color: #3B82F6;
         }
-        /* A simple animation for new rows */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -28,7 +27,7 @@
         <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8">
             <header class="text-center mb-8">
                 <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Daily Task Logger</h1>
-                <p class="text-gray-600 mt-2">Enter your tasks for the day. Each task will be saved as a new row in your Google Sheet.</p>
+                <p class="text-gray-600 mt-2">Add your tasks below and submit them directly to your Google Sheet.</p>
             </header>
 
             <main>
@@ -64,41 +63,32 @@
     <template id="task-template">
         <div class="task-row bg-gray-50 p-4 rounded-lg border border-gray-200 animate-fade-in">
             <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 sm:items-end">
-                <!-- Start Time -->
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-medium text-gray-600">Start Time</label>
                     <input type="time" name="start_time" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
                 </div>
-                <!-- End Time -->
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-medium text-gray-600">End Time</label>
                     <input type="time" name="end_time" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
                 </div>
-                <!-- Task -->
                 <div class="sm:col-span-5">
                     <label class="block text-xs font-medium text-gray-600">Task</label>
                     <input type="text" name="task" placeholder="Describe the task" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
                 </div>
-                <!-- Time Spent -->
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-medium text-gray-600">Time Spent</label>
                     <input type="text" name="time_spent" readonly class="mt-1 w-full p-2 border-gray-200 bg-gray-200 rounded-md text-sm cursor-not-allowed">
                 </div>
-                <!-- Remove Button -->
                 <div class="sm:col-span-1">
-                    <!-- This label is a spacer for desktop alignment and is hidden on mobile -->
                     <label class="hidden sm:block text-xs font-medium text-transparent select-none">Remove</label>
                     <button class="remove-task-btn w-full p-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center justify-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
                         <span class="font-medium sm:hidden">Remove</span>
                     </button>
                 </div>
             </div>
         </div>
     </template>
-
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -109,7 +99,6 @@
             const taskTemplate = document.getElementById('task-template');
             const statusMessage = document.getElementById('status-message');
             
-            // Set today's date as the default
             entryDateInput.valueAsDate = new Date();
 
             const addTask = () => {
@@ -126,24 +115,19 @@
                     if (startTimeInput.value && endTimeInput.value) {
                         const start = new Date(`1970-01-01T${startTimeInput.value}`);
                         const end = new Date(`1970-01-01T${endTimeInput.value}`);
-                        
                         if (end < start) {
                              taskRow.querySelector('input[name="time_spent"]').value = "Invalid";
                              return;
                         }
-
                         let diff = end.getTime() - start.getTime();
                         const hours = Math.floor(diff / (1000 * 60 * 60));
                         diff -= hours * (1000 * 60 * 60);
                         const minutes = Math.floor(diff / (1000 * 60));
-                        
                         taskRow.querySelector('input[name="time_spent"]').value = `${hours}h ${minutes}m`;
                     }
                 };
-
                 startTimeInput.addEventListener('change', calculateDuration);
                 endTimeInput.addEventListener('change', calculateDuration);
-                
                 tasksContainer.appendChild(taskRow);
             };
             
@@ -170,9 +154,7 @@
                     const task = row.querySelector('input[name="task"]').value;
                     const timeSpent = row.querySelector('input[name="time_spent"]').value;
                     
-                    if (!startTime || !endTime || !task || timeSpent === "Invalid") {
-                        isValid = false;
-                    }
+                    if (!startTime || !endTime || !task || timeSpent === "Invalid") isValid = false;
                     
                     rowsData.push({ date, startTime, endTime, task, timeSpent });
                 });
@@ -183,16 +165,10 @@
                     return;
                 }
                 
-                // --- GOOGLE SHEETS INTEGRATION ---
-                // 1. Replace this URL with your Google Apps Script Web App URL.
                 const webAppUrl = 'https://script.google.com/macros/s/AKfycbz0_H4-C3uVNIMV-aX87-r3-LhsiG7iTFAmhNlHJSGq4nHe4XtX_aUrRC16inmoWv48PQ/exec';
-                
-                if (webAppUrl === 'https://script.google.com/macros/s/AKfycbz0_H4-C3uVNIMV-aX87-r3-LhsiG7iTFAmhNlHJSGq4nHe4XtX_aUrRC16inmoWv48PQ/exec') {
-                    console.log('Form data:', rowsData);
-                    statusMessage.textContent = "Submission is mocked. See console for data. Configure your Google Apps Script URL.";
-                    statusMessage.className = "mt-4 text-center text-sm font-medium text-orange-600";
-                    return;
-                }
+
+                // This safety check is what was causing the issue. It has been removed.
+                // Now the code will proceed directly to the submission logic below.
 
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Submitting...';
@@ -202,11 +178,12 @@
                 try {
                     const response = await fetch(webAppUrl, {
                         method: 'POST',
-                        mode: 'cors',
+                        mode: 'cors', // Important for cross-origin requests
                         cache: 'no-cache',
                         headers: {
                             'Content-Type': 'application/json',
                         },
+                        redirect: 'follow',
                         body: JSON.stringify({ rows: rowsData }),
                     });
                     
@@ -215,8 +192,8 @@
                     if(result.result === "success") {
                        statusMessage.textContent = "Tasks submitted successfully!";
                        statusMessage.className = "mt-4 text-center text-sm font-medium text-green-600";
-                       tasksContainer.innerHTML = ''; // Clear tasks
-                       addTask(); // Add one new empty task
+                       tasksContainer.innerHTML = ''; 
+                       addTask();
                     } else {
                         throw new Error(result.message || 'Unknown error occurred.');
                     }
@@ -233,12 +210,10 @@
             addTaskBtn.addEventListener('click', addTask);
             submitBtn.addEventListener('click', handleSubmit);
             
-            // Start with one task row by default
-            addTask();
+            addTask(); // Start with one task row
         });
     </script>
 </body>
 </html>
-
 
 
