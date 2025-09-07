@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Task Logger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .task-row input:focus {
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+            border-color: #3B82F6;
+        }
+        /* A simple animation for new rows */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl">
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8">
+            <header class="text-center mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Daily Task Logger</h1>
+                <p class="text-gray-600 mt-2">Enter your tasks for the day. Each task will be saved as a new row in your Google Sheet.</p>
+            </header>
+
+            <main>
+                <!-- Date Entry -->
+                <div class="mb-6">
+                    <label for="entry-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="entry-date" class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Dynamic Tasks Container -->
+                <div id="tasks-container" class="space-y-4">
+                    <!-- Task rows will be injected here by JavaScript -->
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                     <button id="add-task-btn" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Add Another Task
+                    </button>
+                    <button id="submit-btn" class="w-full sm:w-auto px-6 py-3 text-base font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
+                        Submit Tasks
+                    </button>
+                </div>
+                 <div id="status-message" class="mt-4 text-center text-sm font-medium"></div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Template for a single task row -->
+    <template id="task-template">
+        <div class="task-row bg-gray-50 p-4 rounded-lg border border-gray-200 animate-fade-in">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 sm:items-end">
+                <!-- Start Time -->
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600">Start Time</label>
+                    <input type="time" name="start_time" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
+                </div>
+                <!-- End Time -->
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600">End Time</label>
+                    <input type="time" name="end_time" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
+                </div>
+                <!-- Task -->
+                <div class="sm:col-span-5">
+                    <label class="block text-xs font-medium text-gray-600">Task</label>
+                    <input type="text" name="task" placeholder="Describe the task" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
+                </div>
+                <!-- Time Spent -->
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600">Time Spent</label>
+                    <input type="text" name="time_spent" readonly class="mt-1 w-full p-2 border-gray-200 bg-gray-200 rounded-md text-sm cursor-not-allowed">
+                </div>
+                <!-- Remove Button -->
+                <div class="sm:col-span-1">
+                    <!-- This label is a spacer for desktop alignment and is hidden on mobile -->
+                    <label class="hidden sm:block text-xs font-medium text-transparent select-none">Remove</label>
+                    <button class="remove-task-btn w-full p-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="font-medium sm:hidden">Remove</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tasksContainer = document.getElementById('tasks-container');
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            const entryDateInput = document.getElementById('entry-date');
+            const taskTemplate = document.getElementById('task-template');
+            const statusMessage = document.getElementById('status-message');
+            
+            // Set today's date as the default
+            entryDateInput.valueAsDate = new Date();
+
+            const addTask = () => {
+                const clone = taskTemplate.content.cloneNode(true);
+                const taskRow = clone.querySelector('.task-row');
+                
+                const removeBtn = taskRow.querySelector('.remove-task-btn');
+                removeBtn.addEventListener('click', () => taskRow.remove());
+                
+                const startTimeInput = taskRow.querySelector('input[name="start_time"]');
+                const endTimeInput = taskRow.querySelector('input[name="end_time"]');
+
+                const calculateDuration = () => {
+                    if (startTimeInput.value && endTimeInput.value) {
+                        const start = new Date(`1970-01-01T${startTimeInput.value}`);
+                        const end = new Date(`1970-01-01T${endTimeInput.value}`);
+                        
+                        if (end < start) {
+                             taskRow.querySelector('input[name="time_spent"]').value = "Invalid";
+                             return;
+                        }
+
+                        let diff = end.getTime() - start.getTime();
+                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                        diff -= hours * (1000 * 60 * 60);
+                        const minutes = Math.floor(diff / (1000 * 60));
+                        
+                        taskRow.querySelector('input[name="time_spent"]').value = `${hours}h ${minutes}m`;
+                    }
+                };
+
+                startTimeInput.addEventListener('change', calculateDuration);
+                endTimeInput.addEventListener('change', calculateDuration);
+                
+                tasksContainer.appendChild(taskRow);
+            };
+            
+            const handleSubmit = async () => {
+                const date = entryDateInput.value;
+                if (!date) {
+                    statusMessage.textContent = "Please select a date.";
+                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
+                    return;
+                }
+                
+                const taskRows = tasksContainer.querySelectorAll('.task-row');
+                if (taskRows.length === 0) {
+                    statusMessage.textContent = "Please add at least one task.";
+                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
+                    return;
+                }
+                
+                const rowsData = [];
+                let isValid = true;
+                taskRows.forEach(row => {
+                    const startTime = row.querySelector('input[name="start_time"]').value;
+                    const endTime = row.querySelector('input[name="end_time"]').value;
+                    const task = row.querySelector('input[name="task"]').value;
+                    const timeSpent = row.querySelector('input[name="time_spent"]').value;
+                    
+                    if (!startTime || !endTime || !task || timeSpent === "Invalid") {
+                        isValid = false;
+                    }
+                    
+                    rowsData.push({ date, startTime, endTime, task, timeSpent });
+                });
+                
+                if (!isValid) {
+                    statusMessage.textContent = "Please fill in all fields and ensure times are valid.";
+                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
+                    return;
+                }
+                
+                // --- GOOGLE SHEETS INTEGRATION ---
+                // 1. Replace this URL with your Google Apps Script Web App URL.
+                const webAppUrl = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+                
+                if (webAppUrl === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                    console.log('Form data:', rowsData);
+                    statusMessage.textContent = "Submission is mocked. See console for data. Configure your Google Apps Script URL.";
+                    statusMessage.className = "mt-4 text-center text-sm font-medium text-orange-600";
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+                statusMessage.textContent = "Submitting tasks, please wait...";
+                statusMessage.className = "mt-4 text-center text-sm font-medium text-blue-600";
+                
+                try {
+                    const response = await fetch(webAppUrl, {
+                        method: 'POST',
+                        mode: 'cors',
+                        cache: 'no-cache',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ rows: rowsData }),
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if(result.result === "success") {
+                       statusMessage.textContent = "Tasks submitted successfully!";
+                       statusMessage.className = "mt-4 text-center text-sm font-medium text-green-600";
+                       tasksContainer.innerHTML = ''; // Clear tasks
+                       addTask(); // Add one new empty task
+                    } else {
+                        throw new Error(result.message || 'Unknown error occurred.');
+                    }
+                } catch (error) {
+                    console.error('Error submitting form:', error);
+                    statusMessage.textContent = `Error: ${error.message}`;
+                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Tasks';
+                }
+            };
+
+            addTaskBtn.addEventListener('click', addTask);
+            submitBtn.addEventListener('click', handleSubmit);
+            
+            // Start with one task row by default
+            addTask();
+        });
+    </script>
+</body>
+</html>
+
