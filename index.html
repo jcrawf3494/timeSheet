@@ -30,7 +30,7 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
 
-    <div class="container bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl mx-4">
+    <div class="container bg-white p-8 rounded-xl shadow-lg w-full max-w-3xl mx-4">
         <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Log Your Daily Task</h1>
         
         <!-- Form for logging tasks -->
@@ -82,6 +82,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Elapsed</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
                         </tr>
                     </thead>
@@ -109,10 +110,7 @@
             const exportBtn = document.getElementById('exportBtn');
             const clearBtn = document.getElementById('clearBtn');
             
-            // --- NEW: Load tasks from localStorage when the page opens ---
             let allTasks = JSON.parse(localStorage.getItem('dailyTasks')) || [];
-
-            // --- NEW: Immediately display any saved tasks ---
             renderTasks();
 
             taskTypeSelect.addEventListener('change', () => {
@@ -128,16 +126,11 @@
 
             taskForm.addEventListener('submit', (event) => {
                 event.preventDefault(); 
-                
                 const formData = new FormData(taskForm);
                 const data = Object.fromEntries(formData.entries());
-                
                 allTasks.push(data);
-                
-                // --- NEW: Save the updated task list to localStorage ---
                 saveTasks();
                 renderTasks();
-                
                 taskForm.reset();
                 otherTaskGroup.classList.add('hidden');
             });
@@ -146,23 +139,56 @@
                 localStorage.setItem('dailyTasks', JSON.stringify(allTasks));
             }
 
+            // --- NEW: Helper function to format 24-hour time to 12-hour AM/PM time ---
+            function formatTime12Hour(timeString) {
+                if (!timeString) return '';
+                const [hourString, minute] = timeString.split(':');
+                const hour = parseInt(hourString, 10);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12; // Convert hour 0 to 12
+                return `${hour12}:${minute} ${ampm}`;
+            }
+
+            // --- NEW: Helper function to calculate the difference between two times ---
+            function calculateElapsedTime(startTime, endTime, date) {
+                if (!startTime || !endTime || !date) return 'N/A';
+                const startDateTime = new Date(`${date}T${startTime}`);
+                const endDateTime = new Date(`${date}T${endTime}`);
+
+                if (isNaN(startDateTime) || isNaN(endDateTime) || endDateTime < startDateTime) {
+                    return 'N/A'; // Not Applicable for invalid or negative durations
+                }
+
+                const diff = endDateTime - startDateTime; // Difference in milliseconds
+                const hours = Math.floor(diff / 3600000); // 1000 * 60 * 60
+                const minutes = Math.floor((diff % 3600000) / 60000); // 1000 * 60
+
+                let result = '';
+                if (hours > 0) result += `${hours}h `;
+                if (minutes > 0 || hours === 0) result += `${minutes}m`;
+                
+                return result.trim() || '0m';
+            }
+
             function renderTasks() {
                 taskLogBody.innerHTML = '';
-
-                if (allTasks.length > 0) {
-                    logSection.classList.remove('hidden');
-                } else {
-                    logSection.classList.add('hidden');
-                }
+                logSection.classList.toggle('hidden', allTasks.length === 0);
 
                 allTasks.forEach(task => {
                     const row = document.createElement('tr');
                     const taskDescription = task.taskType === 'Other' ? task.otherTask : task.taskType;
                     
+                    // --- UPDATED: Format date and time for display ---
+                    const formattedDate = task.taskDate ? new Date(task.taskDate + 'T00:00:00').toLocaleDateString('en-US') : '';
+                    const formattedStartTime = formatTime12Hour(task.startTime);
+                    const formattedEndTime = formatTime12Hour(task.endTime);
+                    const elapsedTime = calculateElapsedTime(task.startTime, task.endTime, task.taskDate);
+
                     row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${task.taskDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${task.startTime}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${task.endTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formattedDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedStartTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedEndTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">${elapsedTime}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${taskDescription}</td>
                     `;
                     taskLogBody.appendChild(row);
@@ -170,13 +196,21 @@
             }
 
             function downloadCSV() {
-                const headers = ['Date', 'Start Time', 'End Time', 'Task', 'Details'];
+                // --- UPDATED: Add "Elapsed Time" to headers ---
+                const headers = ['Date', 'Start Time', 'End Time', 'Elapsed Time', 'Task', 'Details'];
                 
                 const csvRows = allTasks.map(task => {
                     const taskDescription = task.taskType === 'Other' ? '' : task.taskType;
                     const details = task.taskType === 'Other' ? task.otherTask : '';
                     const sanitizedDetails = `"${details.replace(/"/g, '""')}"`;
-                    return [task.taskDate, task.startTime, task.endTime, taskDescription, sanitizedDetails].join(',');
+                    
+                    // --- UPDATED: Format data for CSV ---
+                    const formattedDate = task.taskDate ? new Date(task.taskDate + 'T00:00:00').toLocaleDateString('en-US') : '';
+                    const formattedStartTime = formatTime12Hour(task.startTime);
+                    const formattedEndTime = formatTime12Hour(task.endTime);
+                    const elapsedTime = calculateElapsedTime(task.startTime, task.endTime, task.taskDate);
+
+                    return [formattedDate, formattedStartTime, formattedEndTime, elapsedTime, taskDescription, sanitizedDetails].join(',');
                 });
 
                 const csvString = [headers.join(','), ...csvRows].join('\n');
@@ -194,10 +228,8 @@
             exportBtn.addEventListener('click', downloadCSV);
 
             clearBtn.addEventListener('click', () => {
-                // I've replaced the simple `confirm` with a custom modal for better compatibility.
                 if (window.confirm('Are you sure you want to clear the entire log? This cannot be undone.')) {
                     allTasks = [];
-                    // --- NEW: Clear tasks from localStorage as well ---
                     localStorage.removeItem('dailyTasks');
                     renderTasks();
                 }
@@ -206,8 +238,4 @@
     </script>
 </body>
 </html>
-
-
-
-
 
