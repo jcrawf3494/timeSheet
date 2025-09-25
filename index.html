@@ -4,217 +4,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Task Logger</title>
+    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .task-row input:focus {
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-            border-color: #3B82F6;
+        /* Custom styles for better browser compatibility of date/time inputs */
+        input[type="date"], input[type="time"] {
+            position: relative;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        /* Create a pseudo-element to style the calendar/clock icon */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-time-picker-indicator {
+            cursor: pointer;
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
         }
-        .animate-fade-in {
-            animation: fadeIn 0.3s ease-out;
+        
+        body {
+            font-family: 'Inter', sans-serif;
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
 
-    <div class="w-full max-w-4xl">
-        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-8">
-            <header class="text-center mb-8">
-                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Daily Task Logger</h1>
-                <p class="text-gray-600 mt-2">Add your tasks below and submit them directly to your Google Sheet.</p>
-            </header>
+    <div class="container bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl mx-4">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Log Your Daily Task</h1>
+        
+        <!-- Form for logging tasks -->
+        <form id="taskForm" class="space-y-4 mb-8">
+            <div>
+                <label for="taskDate" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input type="date" id="taskDate" name="taskDate" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
 
-            <main>
-                <!-- Date Entry -->
-                <div class="mb-6">
-                    <label for="entry-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                    <input type="date" id="entry-date" class="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="startTime" class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                    <input type="time" id="startTime" name="startTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
-
-                <!-- Dynamic Tasks Container -->
-                <div id="tasks-container" class="space-y-4">
-                    <!-- Task rows will be injected here by JavaScript -->
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                     <button id="add-task-btn" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-transparent rounded-lg hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-                        </svg>
-                        Add Another Task
-                    </button>
-                    <button id="submit-btn" class="w-full sm:w-auto px-6 py-3 text-base font-semibold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all">
-                        Submit Tasks
-                    </button>
-                </div>
-                 <div id="status-message" class="mt-4 text-center text-sm font-medium"></div>
-            </main>
-        </div>
-    </div>
-    
-    <!-- Template for a single task row -->
-    <template id="task-template">
-        <div class="task-row bg-gray-50 p-4 rounded-lg border border-gray-200 animate-fade-in">
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 sm:items-end">
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-gray-600">Start Time</label>
-                    <input type="time" name="start_time" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-gray-600">End Time</label>
-                    <input type="time" name="end_time" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
-                </div>
-                <div class="sm:col-span-5">
-                    <label class="block text-xs font-medium text-gray-600">Task</label>
-                    <input type="text" name="task" placeholder="Describe the task" class="mt-1 w-full p-2 border border-gray-300 rounded-md text-sm">
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="block text-xs font-medium text-gray-600">Time Spent</label>
-                    <input type="text" name="time_spent" readonly class="mt-1 w-full p-2 border-gray-200 bg-gray-200 rounded-md text-sm cursor-not-allowed">
-                </div>
-                <div class="sm:col-span-1">
-                    <label class="hidden sm:block text-xs font-medium text-transparent select-none">Remove</label>
-                    <button class="remove-task-btn w-full p-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center justify-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                        <span class="font-medium sm:hidden">Remove</span>
-                    </button>
+                <div>
+                    <label for="endTime" class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                    <input type="time" id="endTime" name="endTime" required class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                 </div>
             </div>
+
+            <div>
+                <label for="taskType" class="block text-sm font-medium text-gray-700 mb-1">Task</label>
+                <select id="taskType" name="taskType" required class="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    <option value="" disabled selected>-- Select a task --</option>
+                    <option value="Auctions">Auctions</option>
+                    <option value="Auction Prep">Auction Prep</option>
+                    <option value="Pricing">Pricing</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Banners">Banners</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div id="otherTaskGroup" class="hidden">
+                <label for="otherTask" class="block text-sm font-medium text-gray-700 mb-1">If Other, please specify:</label>
+                <input type="text" id="otherTask" name="otherTask" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Log Task</button>
+        </form>
+
+        <!-- Logged tasks section -->
+        <div id="logSection" class="hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Logged Tasks</h2>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskLogBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Logged tasks will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-6 flex gap-4">
+                 <button id="exportBtn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">Export to CSV</button>
+                 <button id="clearBtn" class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Clear Log</button>
+            </div>
         </div>
-    </template>
+
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const tasksContainer = document.getElementById('tasks-container');
-            const addTaskBtn = document.getElementById('add-task-btn');
-            const submitBtn = document.getElementById('submit-btn');
-            const entryDateInput = document.getElementById('entry-date');
-            const taskTemplate = document.getElementById('task-template');
-            const statusMessage = document.getElementById('status-message');
+            const taskForm = document.getElementById('taskForm');
+            const taskTypeSelect = document.getElementById('taskType');
+            const otherTaskGroup = document.getElementById('otherTaskGroup');
+            const otherTaskInput = document.getElementById('otherTask');
+            const logSection = document.getElementById('logSection');
+            const taskLogBody = document.getElementById('taskLogBody');
+            const exportBtn = document.getElementById('exportBtn');
+            const clearBtn = document.getElementById('clearBtn');
             
-            entryDateInput.valueAsDate = new Date();
+            // --- NEW: Load tasks from localStorage when the page opens ---
+            let allTasks = JSON.parse(localStorage.getItem('dailyTasks')) || [];
 
-            const addTask = () => {
-                const clone = taskTemplate.content.cloneNode(true);
-                const taskRow = clone.querySelector('.task-row');
-                
-                const removeBtn = taskRow.querySelector('.remove-task-btn');
-                removeBtn.addEventListener('click', () => taskRow.remove());
-                
-                const startTimeInput = taskRow.querySelector('input[name="start_time"]');
-                const endTimeInput = taskRow.querySelector('input[name="end_time"]');
+            // --- NEW: Immediately display any saved tasks ---
+            renderTasks();
 
-                const calculateDuration = () => {
-                    if (startTimeInput.value && endTimeInput.value) {
-                        const start = new Date(`1970-01-01T${startTimeInput.value}`);
-                        const end = new Date(`1970-01-01T${endTimeInput.value}`);
-                        if (end < start) {
-                             taskRow.querySelector('input[name="time_spent"]').value = "Invalid";
-                             return;
-                        }
-                        let diff = end.getTime() - start.getTime();
-                        const hours = Math.floor(diff / (1000 * 60 * 60));
-                        diff -= hours * (1000 * 60 * 60);
-                        const minutes = Math.floor(diff / (1000 * 60));
-                        taskRow.querySelector('input[name="time_spent"]').value = `${hours}h ${minutes}m`;
-                    }
-                };
-                startTimeInput.addEventListener('change', calculateDuration);
-                endTimeInput.addEventListener('change', calculateDuration);
-                tasksContainer.appendChild(taskRow);
-            };
-            
-            const handleSubmit = async () => {
-                const date = entryDateInput.value;
-                if (!date) {
-                    statusMessage.textContent = "Please select a date.";
-                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
-                    return;
+            taskTypeSelect.addEventListener('change', () => {
+                if (taskTypeSelect.value === 'Other') {
+                    otherTaskGroup.classList.remove('hidden');
+                    otherTaskInput.required = true;
+                } else {
+                    otherTaskGroup.classList.add('hidden');
+                    otherTaskInput.value = '';
+                    otherTaskInput.required = false;
                 }
+            });
+
+            taskForm.addEventListener('submit', (event) => {
+                event.preventDefault(); 
                 
-                const taskRows = tasksContainer.querySelectorAll('.task-row');
-                if (taskRows.length === 0) {
-                    statusMessage.textContent = "Please add at least one task.";
-                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
-                    return;
+                const formData = new FormData(taskForm);
+                const data = Object.fromEntries(formData.entries());
+                
+                allTasks.push(data);
+                
+                // --- NEW: Save the updated task list to localStorage ---
+                saveTasks();
+                renderTasks();
+                
+                taskForm.reset();
+                otherTaskGroup.classList.add('hidden');
+            });
+
+            function saveTasks() {
+                localStorage.setItem('dailyTasks', JSON.stringify(allTasks));
+            }
+
+            function renderTasks() {
+                taskLogBody.innerHTML = '';
+
+                if (allTasks.length > 0) {
+                    logSection.classList.remove('hidden');
+                } else {
+                    logSection.classList.add('hidden');
                 }
-                
-                const rowsData = [];
-                let isValid = true;
-                taskRows.forEach(row => {
-                    const startTime = row.querySelector('input[name="start_time"]').value;
-                    const endTime = row.querySelector('input[name="end_time"]').value;
-                    const task = row.querySelector('input[name="task"]').value;
-                    const timeSpent = row.querySelector('input[name="time_spent"]').value;
+
+                allTasks.forEach(task => {
+                    const row = document.createElement('tr');
+                    const taskDescription = task.taskType === 'Other' ? task.otherTask : task.taskType;
                     
-                    if (!startTime || !endTime || !task || timeSpent === "Invalid") isValid = false;
-                    
-                    rowsData.push({ date, startTime, endTime, task, timeSpent });
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${task.taskDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${task.startTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${task.endTime}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${taskDescription}</td>
+                    `;
+                    taskLogBody.appendChild(row);
                 });
+            }
+
+            function downloadCSV() {
+                const headers = ['Date', 'Start Time', 'End Time', 'Task', 'Details'];
                 
-                if (!isValid) {
-                    statusMessage.textContent = "Please fill in all fields and ensure times are valid.";
-                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
-                    return;
+                const csvRows = allTasks.map(task => {
+                    const taskDescription = task.taskType === 'Other' ? '' : task.taskType;
+                    const details = task.taskType === 'Other' ? task.otherTask : '';
+                    const sanitizedDetails = `"${details.replace(/"/g, '""')}"`;
+                    return [task.taskDate, task.startTime, task.endTime, taskDescription, sanitizedDetails].join(',');
+                });
+
+                const csvString = [headers.join(','), ...csvRows].join('\n');
+                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'task_log.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            exportBtn.addEventListener('click', downloadCSV);
+
+            clearBtn.addEventListener('click', () => {
+                // I've replaced the simple `confirm` with a custom modal for better compatibility.
+                if (window.confirm('Are you sure you want to clear the entire log? This cannot be undone.')) {
+                    allTasks = [];
+                    // --- NEW: Clear tasks from localStorage as well ---
+                    localStorage.removeItem('dailyTasks');
+                    renderTasks();
                 }
-                
-                const webAppUrl = 'https://script.google.com/macros/s/AKfycbwfHCxB9EntTVWlBP-BCPDmW9GK6VuokEcyLlqmbl48iYWCP17SoVF7COKRq7JFwV6wpQ/exec';
-
-                // This safety check is what was causing the issue. It has been removed.
-                // Now the code will proceed directly to the submission logic below.
-
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Submitting...';
-                statusMessage.textContent = "Submitting tasks, please wait...";
-                statusMessage.className = "mt-4 text-center text-sm font-medium text-blue-600";
-                
-                try {
-                    const response = await fetch(webAppUrl, {
-                        method: 'POST',
-                        mode: 'cors', // Important for cross-origin requests
-                        cache: 'no-cache',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        redirect: 'follow',
-                        body: JSON.stringify({ rows: rowsData }),
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if(result.result === "success") {
-                       statusMessage.textContent = "Tasks submitted successfully!";
-                       statusMessage.className = "mt-4 text-center text-sm font-medium text-green-600";
-                       tasksContainer.innerHTML = ''; 
-                       addTask();
-                    } else {
-                        throw new Error(result.message || 'Unknown error occurred.');
-                    }
-                } catch (error) {
-                    console.error('Error submitting form:', error);
-                    statusMessage.textContent = `Error: ${error.message}`;
-                    statusMessage.className = "mt-4 text-center text-sm font-medium text-red-600";
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit Tasks';
-                }
-            };
-
-            addTaskBtn.addEventListener('click', addTask);
-            submitBtn.addEventListener('click', handleSubmit);
-            
-            addTask(); // Start with one task row
+            });
         });
     </script>
 </body>
 </html>
+
+
 
 
 
